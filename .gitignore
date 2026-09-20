@@ -1,0 +1,20 @@
+# OAuth secrets - NEVER commit these.
+# credentials.json holds the OAuth client ID/secret.
+# token.json holds a live refresh token for the student's Google account.
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
