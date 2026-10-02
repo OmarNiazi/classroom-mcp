@@ -28,28 +28,47 @@ The current scope covers **student-facing functionality** only.
 ## Repository Layout
 
 ```
-classroom-mcp/
-├── credentials.json      # OAuth 2.0 client credentials (never commit)
-├── token.json            # Auto-generated on first auth run (never commit)
-├── server.py             # MCP server entry point
-└── requirements.txt      # Python dependencies
+pyproject.toml                # package metadata; `classroom-mcp` console script
+src/classroom_mcp/
+├── __main__.py               # CLI: serve (default) | setup | remove | login | logout | status
+├── hosts.py                  # setup/remove: register in Claude Desktop, Claude Code, Cursor
+├── server.py                 # MCP tool definitions + dispatch (thin)
+├── classroom.py              # Classroom API calls, pagination, submission merge
+├── formatting.py             # pure rendering helpers
+├── auth.py                   # shared client, token store, on-demand sign-in
+├── errors.py                 # failure text returned to the model
+└── client_config.json        # shared Desktop OAuth client (public by design, ADR-009)
+tests/                        # pytest; offline fakes + stdio end-to-end
+install.ps1, install.sh       # one-line installers (uv + `classroom-mcp setup`), served raw from GitHub
 ```
 
 ```
 docs/
-├── project-state.md      # Current project snapshot + last implemented item
-└── adrs/                 # Architectural Decision Records
+├── project-state.md          # Current project snapshot + last implemented item
+├── phase-1-plan.md           # Open-source Phase 1 plan + decisions
+├── phase-1-architecture.svg  # Architecture diagram
+└── adrs/                     # Architectural Decision Records
 ```
+
+The student's sign-in is stored outside the repo, in the per-user config dir
+(`%LOCALAPPDATA%\classroom-mcp\token.json` on Windows). Never commit tokens.
 
 ---
 
 ## Dev Setup
 
 ```bash
-cd classroom-mcp
-pip install -r requirements.txt
-python server.py           # First run triggers OAuth browser flow; token.json is written
+uv sync
+uv run pytest
+uv run classroom-mcp          # serve over stdio; first tool call starts browser sign-in
+uv run classroom-mcp status   # where the sign-in is saved
 ```
+
+Students run it with `uvx --managed-python classroom-mcp` from PyPI (ADR-008). Publish with
+`uv build && uv publish` (owner's PyPI token).
+
+When rewriting files from PowerShell 5.1, never use `Get-Content`/`Set-Content` round-trips on
+UTF-8 files: they decode as ANSI and re-encode with a BOM (this garbled the 0.1.0 PyPI README).
 
 The server communicates over **stdio**. Do not add an HTTP/SSE transport layer.
 
@@ -57,7 +76,10 @@ The server communicates over **stdio**. Do not add an HTTP/SSE transport layer.
 
 ## Architecture Notes
 
-- **Transport:** stdio only — the MCP host spawns and communicates with `server.py` directly.
-- **Auth:** OAuth 2.0 via `credentials.json` / `token.json`. The Google Classroom API scopes needed are read-only for the current student tools.
+- **Transport:** stdio only — the MCP host spawns the `classroom-mcp` process. Nothing but
+  protocol frames may reach stdout. The sign-in's loopback listener is not a transport (ADR-009).
+- **Auth:** OAuth 2.0 with the bundled shared client; sign-in starts on the first tool call that
+  needs it (ADR-009). Scopes are read-only: `classroom.courses.readonly`,
+  `classroom.announcements.readonly`, `classroom.student-submissions.me.readonly`.
 - **ADR discipline:** Any significant design decision (auth approach, tool naming, error handling strategy, etc.) must be recorded as an ADR under `docs/adrs/` before or alongside implementation.
 - **project-state.md** is the living document — update it whenever a tool is added or a meaningful change lands.

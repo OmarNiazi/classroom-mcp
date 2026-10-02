@@ -50,5 +50,9 @@ The `hasattr` guard covers stream objects that a host might substitute without `
   that ordering hard to break accidentally.
 - Any future stdio-based MCP server on Windows needs the same treatment; this is a property of
   the SDK's transport, not of this server.
+- **Update 2026-10-03:** `mcp` >= 1.30 wraps the protocol streams in UTF-8 itself, so the SDK
+  no longer has this bug. The reconfigure is kept (now first thing in `__main__.main()`) for
+  stderr logging and the CLI's own console output. `tests/test_stdio.py` checks non-ASCII
+  output end to end over the real transport.
 - ADR-001 already requires logging to stderr only. That still holds — this ADR only changes the
   encoding of those streams, not which stream is used.

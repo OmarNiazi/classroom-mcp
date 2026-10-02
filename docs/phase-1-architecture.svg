@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 730" width="1100" height="730" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .title { font-size: 20px; font-weight: 600; fill: #222; }
+      .group { font-size: 14px; font-weight: 600; fill: #333; }
+      .h { font-size: 14px; font-weight: 600; fill: #111; }
+      .s { font-size: 11.5px; fill: #444; }
+      .lbl { font-size: 11.5px; fill: #333; font-style: italic; }
+      .note { font-size: 12.5px; fill: #333; }
+      .line { stroke: #444; stroke-width: 1.6; fill: none; }
+      .dash { stroke: #444; stroke-width: 1.6; fill: none; stroke-dasharray: 6 4; }
+    </style>
+  </defs>
+
+  <rect width="1100" height="730" fill="#ffffff"/>
+  <text x="20" y="34" class="title">classroom-mcp: Phase 1 architecture (local install)</text>
+
+  <!-- Student's computer -->
+  <rect x="20" y="60" width="720" height="620" rx="12" fill="#f4f7fb" stroke="#7a90b0" stroke-width="1.5"/>
+  <text x="36" y="84" class="group">Student's computer</text>
+
+  <!-- MCP host -->
+  <rect x="50" y="100" width="200" height="110" rx="8" fill="#ffffff" stroke="#555"/>
+  <text x="150" y="134" text-anchor="middle" class="h">MCP host</text>
+  <text x="150" y="156" text-anchor="middle" class="s">Claude Desktop, Claude Code,</text>
+  <text x="150" y="172" text-anchor="middle" class="s">Cursor, VS Code ...</text>
+  <text x="150" y="194" text-anchor="middle" class="s">launches: uvx classroom-mcp</text>
+
+  <!-- classroom-mcp process -->
+  <rect x="320" y="100" width="390" height="380" rx="10" fill="#eaf4ea" stroke="#5a8f5a" stroke-width="1.5"/>
+  <text x="336" y="124" class="group">classroom-mcp process (Python via uvx)</text>
+
+  <rect x="345" y="140" width="340" height="60" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="515" y="164" text-anchor="middle" class="h">server.py: MCP tools</text>
+  <text x="515" y="184" text-anchor="middle" class="s">get_all_courses · get_assessment_items · read_stream_announcements</text>
+
+  <rect x="345" y="220" width="160" height="70" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="425" y="246" text-anchor="middle" class="h">formatting.py</text>
+  <text x="425" y="265" text-anchor="middle" class="s">dates, materials,</text>
+  <text x="425" y="280" text-anchor="middle" class="s">truncation</text>
+
+  <rect x="525" y="220" width="160" height="70" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="605" y="246" text-anchor="middle" class="h">classroom.py</text>
+  <text x="605" y="265" text-anchor="middle" class="s">API calls, pagination,</text>
+  <text x="605" y="280" text-anchor="middle" class="s">submission merge</text>
+
+  <rect x="345" y="310" width="340" height="70" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="515" y="336" text-anchor="middle" class="h">auth.py</text>
+  <text x="515" y="355" text-anchor="middle" class="s">bundled client ID · on-demand sign-in · auto refresh</text>
+  <text x="515" y="370" text-anchor="middle" class="s">self-heal on revoke · CLI: login / logout / status</text>
+
+  <rect x="345" y="400" width="340" height="56" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="515" y="423" text-anchor="middle" class="h">errors.py</text>
+  <text x="515" y="442" text-anchor="middle" class="s">API / auth failures to plain-text guidance (ADR-006)</text>
+
+  <!-- internal arrows -->
+  <line x1="460" y1="200" x2="440" y2="218" class="line" marker-end="url(#arrow)"/>
+  <line x1="570" y1="200" x2="590" y2="218" class="line" marker-end="url(#arrow)"/>
+  <line x1="605" y1="290" x2="605" y2="308" class="line" marker-end="url(#arrow)"/>
+  <text x="612" y="303" class="lbl">credentials</text>
+
+  <!-- Browser -->
+  <rect x="50" y="560" width="200" height="80" rx="8" fill="#ffffff" stroke="#555"/>
+  <text x="150" y="590" text-anchor="middle" class="h">Web browser</text>
+  <text x="150" y="610" text-anchor="middle" class="s">one-time Google sign-in</text>
+  <text x="150" y="626" text-anchor="middle" class="s">+ consent (one click)</text>
+
+  <!-- Token store -->
+  <rect x="420" y="560" width="230" height="80" rx="8" fill="#fff8e6" stroke="#b08a2e"/>
+  <text x="535" y="588" text-anchor="middle" class="h">token.json</text>
+  <text x="535" y="608" text-anchor="middle" class="s">per-user config dir (platformdirs)</text>
+  <text x="535" y="624" text-anchor="middle" class="s">e.g. %LOCALAPPDATA%\classroom-mcp\</text>
+
+  <!-- host <-> server stdio -->
+  <line x1="250" y1="160" x2="343" y2="170" class="line" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="258" y="148" class="lbl">stdio (JSON-RPC)</text>
+
+  <!-- auth -> browser -->
+  <line x1="345" y1="360" x2="175" y2="558" class="line" marker-end="url(#arrow)"/>
+  <text x="200" y="455" class="lbl">opens sign-in URL</text>
+
+  <!-- auth <-> token -->
+  <line x1="535" y1="458" x2="535" y2="558" class="line" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="543" y="520" class="lbl">read / write</text>
+
+  <!-- Google -->
+  <rect x="780" y="60" width="300" height="320" rx="12" fill="#fdf1ef" stroke="#c0675a" stroke-width="1.5"/>
+  <text x="796" y="84" class="group">Google</text>
+
+  <rect x="800" y="100" width="260" height="100" rx="8" fill="#ffffff" stroke="#555"/>
+  <text x="930" y="128" text-anchor="middle" class="h">Classroom API v1</text>
+  <text x="930" y="150" text-anchor="middle" class="s">read-only scopes:</text>
+  <text x="930" y="166" text-anchor="middle" class="s">courses, announcements,</text>
+  <text x="930" y="182" text-anchor="middle" class="s">own submissions</text>
+
+  <rect x="800" y="260" width="260" height="90" rx="8" fill="#ffffff" stroke="#555"/>
+  <text x="930" y="288" text-anchor="middle" class="h">Google OAuth</text>
+  <text x="930" y="308" text-anchor="middle" class="s">consent screen (unverified app)</text>
+  <text x="930" y="324" text-anchor="middle" class="s">token issue + refresh</text>
+
+  <!-- classroom -> API -->
+  <polyline points="685,245 750,245 750,150 798,150" class="line" marker-end="url(#arrow)"/>
+  <text x="692" y="238" class="lbl">HTTPS</text>
+
+  <!-- auth -> OAuth refresh -->
+  <polyline points="685,335 765,335 765,300 798,300" class="line" marker-end="url(#arrow)"/>
+  <text x="692" y="350" class="lbl">refresh</text>
+
+  <!-- browser -> OAuth (dashed), redirect back to localhost -->
+  <polyline points="150,640 150,662 775,662 775,335 798,335" class="dash" marker-end="url(#arrow)"/>
+  <text x="300" y="656" class="lbl">consent at accounts.google.com, then redirect to localhost (auth.py catches it)</text>
+
+  <!-- Distribution -->
+  <rect x="800" y="420" width="260" height="210" rx="12" fill="#f3eefb" stroke="#8a6fbf" stroke-width="1.5"/>
+  <text x="816" y="444" class="group">Distribution (open source)</text>
+
+  <rect x="820" y="456" width="220" height="34" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="930" y="478" text-anchor="middle" class="s">GitHub repo (MIT, code + docs)</text>
+  <rect x="820" y="512" width="220" height="34" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="930" y="534" text-anchor="middle" class="s">GitHub Actions: tests on 3 OSes</text>
+  <rect x="820" y="568" width="220" height="34" rx="6" fill="#ffffff" stroke="#555"/>
+  <text x="930" y="590" text-anchor="middle" class="s">PyPI: classroom-mcp (uv publish)</text>
+
+  <line x1="930" y1="490" x2="930" y2="510" class="line" marker-end="url(#arrow)"/>
+  <line x1="930" y1="546" x2="930" y2="566" class="line" marker-end="url(#arrow)"/>
+
+  <!-- PyPI -> process -->
+  <polyline points="820,585 790,585 790,470 712,470" class="dash" marker-end="url(#arrow)"/>
+  <text x="716" y="500" class="lbl" text-anchor="start"> </text>
+  <text x="846" y="622" class="lbl">uvx downloads on first launch</text>
+
+  <!-- footer -->
+  <text x="20" y="712" class="note">No project-operated server: each student's token stays on their own device. Phase 2 (mobile) adds an opt-in, self-hosted HTTP mode.</text>
+</svg>

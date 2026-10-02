@@ -1,7 +1,8 @@
 # ADR-002: OAuth 2.0 with local token cache for authentication
 
 **Date:** 2026-04-29  
-**Status:** Accepted
+**Status:** Accepted, amended by ADR-009 (shared bundled client, token in the user config dir,
+sign-in on demand instead of at startup)
 
 ## Context
 The Google Classroom API requires authentication on behalf of a specific user (the student).

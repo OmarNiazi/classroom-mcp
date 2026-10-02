@@ -1,7 +1,7 @@
 # ADR-003: Pin explicit Python interpreter path in Claude Desktop config
 
 **Date:** 2026-04-29  
-**Status:** Accepted
+**Status:** Superseded by ADR-008 (`uvx` provisions the interpreter; nothing to pin)
 
 ## Context
 The machine has multiple Python versions on PATH (3.11, 3.13, 3.14). Claude Desktop resolves
