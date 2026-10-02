@@ -14,15 +14,16 @@ and VS Code. It's **read-only**: it can't submit work, post, or change anything.
 
 ## Install (one command)
 
-**Windows:** open **PowerShell** and paste:
+**On Windows:** open **Command Prompt** or **PowerShell** and paste:
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/OmarNiazi/classroom-mcp/main/install.ps1 | iex"
 ```
 
-**macOS / Linux:** open **Terminal** and paste:
+**On a Mac or Linux** (not Windows): open **Terminal** and paste:
 ```sh
 curl -LsSf https://raw.githubusercontent.com/OmarNiazi/classroom-mcp/main/install.sh | sh
 ```
+If Windows says *"'sh' is not recognized"*, you pasted the Mac command. Use the Windows one above.
 
 It adds itself to Claude Desktop, Claude Code and Cursor (whichever you have), then opens your
 browser to sign in with Google:
