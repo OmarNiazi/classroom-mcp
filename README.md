@@ -16,7 +16,7 @@ and VS Code. It's **read-only**: it can't submit work, post, or change anything.
 
 **On Windows:** open **Command Prompt** or **PowerShell** and paste:
 ```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/OmarNiazi/classroom-mcp/main/install.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/OmarNiazi/classroom-mcp/main/install.ps1 | iex"
 ```
 
 **On a Mac or Linux** (not Windows): open **Terminal** and paste:

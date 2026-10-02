@@ -1,2 +1,4 @@
-# install.sh is piped straight into `sh` on macOS/Linux; CRLF would break it.
+# Both installers are served raw from GitHub and piped into a shell; keep their
+# bytes exactly as committed (tests/test_install_scripts.py checks them).
 *.sh text eol=lf
+install.ps1 text eol=lf

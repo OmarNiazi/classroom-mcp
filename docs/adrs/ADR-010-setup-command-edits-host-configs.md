@@ -40,6 +40,15 @@ separate step that revokes Google access.
 process so it can't end the script), put `~/.local/bin` on PATH for the current session, and run
 `uvx --managed-python classroom-mcp@latest setup`.
 
+**`install.ps1` is written one complete statement per line, with no blank lines and no trailing
+newline** (added 2026-10-03). On the developer's machine, Windows PowerShell 5.1 with profiles
+loaded made `irm ... | iex` execute the script line by line: the first blank line failed with
+"Cannot bind argument to parameter 'Command' because it is an empty string", and the first
+multi-line `if { ... }` failed to parse. The same script ran fine with `-NoProfile`, and the
+downloaded text was a single intact string, so the root cause is in the PowerShell host, not the
+download. The documented one-liner also passes `-NoProfile`. `tests/test_install_scripts.py`
+enforces the format, and `.gitattributes` pins the file to LF.
+
 VS Code is not auto-configured yet; its user-level MCP config location has moved between
 releases, and writing a file it ignores would report a false success. It's covered by the
 manual instructions.
