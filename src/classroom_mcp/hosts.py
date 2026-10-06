@@ -140,6 +140,73 @@ def unregister_json(host):
     return Result(host.label, "removed", str(host.path))
 
 
+# --- Is Claude Desktop running? -------------------------------------------------
+#
+# Claude Desktop reads its config only at startup and later saves its in-memory
+# copy back (preferences and all), so an edit made while it runs is silently
+# reverted. setup therefore waits for it to be closed before writing.
+
+
+def _windows_process_paths():
+    import ctypes
+    from ctypes import wintypes
+
+    psapi = ctypes.WinDLL("psapi")
+    kernel32 = ctypes.WinDLL("kernel32")
+    pids = (wintypes.DWORD * 8192)()
+    needed = wintypes.DWORD()
+    if not psapi.EnumProcesses(pids, ctypes.sizeof(pids), ctypes.byref(needed)):
+        return []
+    paths = []
+    for pid in pids[: needed.value // ctypes.sizeof(wintypes.DWORD)]:
+        handle = kernel32.OpenProcess(0x1000, False, pid)  # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            continue
+        try:
+            buffer = ctypes.create_unicode_buffer(32768)
+            size = wintypes.DWORD(len(buffer))
+            if kernel32.QueryFullProcessImageNameW(handle, 0, buffer, ctypes.byref(size)):
+                paths.append(buffer.value)
+        finally:
+            kernel32.CloseHandle(handle)
+    return paths
+
+
+def is_claude_desktop_exe(path):
+    """Claude Desktop's Claude.exe, not the Claude Code CLI's claude.exe."""
+    lowered = path.lower().replace("/", "\\")
+    if not lowered.endswith("\\claude.exe"):
+        return False
+    return "\\claude-code\\" not in lowered and not lowered.endswith("\\.local\\bin\\claude.exe")
+
+
+def claude_desktop_running(platform=None):
+    platform = platform or sys.platform
+    try:
+        if platform == "win32":
+            return any(is_claude_desktop_exe(p) for p in _windows_process_paths())
+        if platform == "darwin":
+            # The app's process is "Claude"; the Claude Code CLI is lowercase "claude".
+            return subprocess.run(["pgrep", "-x", "Claude"], capture_output=True).returncode == 0
+    except (OSError, AttributeError, subprocess.SubprocessError):
+        pass
+    return False  # unknown: don't block setup on it
+
+
+def wait_until_claude_desktop_closed(timeout=300, poll=1.0, sleep=None, clock=None):
+    """True once Claude Desktop isn't running, False if still open after `timeout`."""
+    import time
+
+    sleep = sleep or time.sleep
+    clock = clock or time.monotonic
+    deadline = clock() + timeout
+    while claude_desktop_running():
+        if clock() >= deadline:
+            return False
+        sleep(poll)
+    return True
+
+
 def _claude(*args):
     claude = shutil.which("claude")
     return subprocess.run(

@@ -98,6 +98,12 @@ Your school's Google Workspace doesn't allow unverified third-party apps. This i
 for school-managed accounts, especially for students under 18. Only your school's IT admin
 can allow it. A personal Google account that's enrolled in your classes will work.
 
+**It doesn't show up in Claude Desktop**
+Run `uvx --managed-python classroom-mcp setup` again. If Claude Desktop is open, setup asks you to
+quit it first, because Claude Desktop undoes changes made to its settings while it's running.
+Quit it from the system tray (right-click the Claude icon, then Quit) or with Cmd+Q on a Mac, let
+setup finish, then open Claude Desktop.
+
 **The app says it can't find `uvx`, or the server fails to start**
 Apps opened from the Start menu or Dock don't always see newly installed tools. Restart your
 computer, or put the full path in `"command"` instead of `uvx`:

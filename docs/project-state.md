@@ -26,7 +26,17 @@ Same three tools, identical output. 73 offline tests.
 - **Hosted `install.ps1`** works both with and without `-NoProfile` (see ADR-010 on the
   line-by-line `iex` issue).
 
-## Last Implemented (2026-10-03)
+## Last Implemented (2026-10-07)
+- **0.2.1: `setup` waits for Claude Desktop to be quit before editing its config.** Claude
+  Desktop had silently reverted the 0.2.0 edit (it saves its in-memory config back while
+  running), so on the dev machine it never launched the new entry. `setup` and `remove` now
+  detect it running, ask the user to quit it from the tray, wait up to 5 minutes, then write. If
+  it stays open, it's skipped and the other apps are still configured. Verified on the dev
+  machine: after the fix Claude Desktop launched the `uvx` entry and served tool calls, and its
+  own later config save kept the entry. Claude Desktop (Store build) logs are in
+  `%LOCALAPPDATA%\Claude\Logs`.
+
+## Earlier (2026-10-03)
 - **Installer robustness:** `install.ps1` is one complete statement per line, with no blank
   lines and no trailing newline. On the dev machine, PowerShell 5.1 with profiles loaded made
   `irm | iex` run it line by line. The format is enforced by `tests/test_install_scripts.py`.

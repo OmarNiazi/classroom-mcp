@@ -1,6 +1,6 @@
 [project]
 name = "classroom-mcp"
-version = "0.2.0"
+version = "0.2.1"
 description = "Google Classroom MCP server for students: courses, assignments with your submission status, and announcements."
 readme = "README.md"
 license = "MIT"

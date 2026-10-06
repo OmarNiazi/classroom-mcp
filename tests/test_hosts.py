@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 
 import pytest
 
@@ -8,6 +9,13 @@ from classroom_mcp import hosts
 
 CMD = r"C:\Users\Student\.local\bin\uvx.exe"
 ARGS = ["--managed-python", "classroom-mcp"]
+
+
+@pytest.fixture(autouse=True)
+def claude_desktop_closed(monkeypatch):
+    """Never look at the real process list: a developer's open Claude Desktop
+    would make setup wait. Tests that need it running override this."""
+    monkeypatch.setattr(hosts, "claude_desktop_running", lambda platform=None: False)
 
 
 def host(tmp_path, name="claude_desktop_config.json"):
@@ -188,8 +196,82 @@ def test_setup_registers_then_signs_in(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "Claude Desktop  set up" in out
     assert "[sign-in ran]" in out
-    assert "Fully quit and reopen Claude Desktop" in out
+    assert "Now open Claude Desktop" in out
+    assert "Waiting for Claude Desktop" not in out
     assert "google-classroom" in read(h.path)["mcpServers"]
+
+
+# --- Claude Desktop must be closed before its config is edited ------------------
+
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        (r"C:\Program Files\WindowsApps\Claude_2.19675.1.0_x64__pzs8sxrjxfjjc\app\Claude.exe", True),
+        (r"C:\Users\S\AppData\Local\AnthropicClaude\app-0.9.3\Claude.exe", True),
+        (r"C:\Users\S\AppData\Roaming\Claude\claude-code\2.1.288\36aa8c97bf86\claude.exe", False),
+        (r"C:\Users\S\.local\bin\claude.exe", False),
+        (r"C:\Tools\notclaude.exe", False),
+    ],
+)
+def test_tells_claude_desktop_apart_from_claude_code(path, expected):
+    assert hosts.is_claude_desktop_exe(path) is expected
+
+
+def test_waits_until_claude_desktop_closes(monkeypatch):
+    states = iter([True, True, False])
+    monkeypatch.setattr(hosts, "claude_desktop_running", lambda platform=None: next(states))
+    slept = []
+    assert hosts.wait_until_claude_desktop_closed(sleep=slept.append, clock=lambda: 0) is True
+    assert len(slept) == 2
+
+
+def test_gives_up_if_claude_desktop_stays_open(monkeypatch):
+    monkeypatch.setattr(hosts, "claude_desktop_running", lambda platform=None: True)
+    now = iter(range(0, 1000, 100))
+    assert hosts.wait_until_claude_desktop_closed(timeout=300, sleep=lambda s: None, clock=lambda: next(now)) is False
+
+
+def test_setup_waits_for_claude_desktop_then_writes(tmp_path, monkeypatch, capsys):
+    h = host(tmp_path)
+    monkeypatch.setattr(hosts, "json_hosts", lambda: [h])
+    monkeypatch.setattr(hosts, "claude_code_installed", lambda: False)
+    monkeypatch.setattr(hosts, "claude_desktop_running", lambda platform=None: True)
+
+    def quit_desktop(**kwargs):
+        assert not h.path.exists(), "config must not be written while Claude Desktop runs"
+        return True
+
+    monkeypatch.setattr(hosts, "wait_until_claude_desktop_closed", quit_desktop)
+    monkeypatch.setattr(cli, "_login", lambda: 0)
+
+    assert cli.main(["setup"]) == 0
+    out = capsys.readouterr().out
+    assert "Claude Desktop is open" in out
+    assert "Claude Desktop closed" in out
+    assert "google-classroom" in read(h.path)["mcpServers"]
+
+
+def test_setup_skips_claude_desktop_left_open_but_does_the_rest(tmp_path, monkeypatch, capsys):
+    desktop = host(tmp_path)
+    cursor = hosts.JsonHost(hosts.CURSOR, "Cursor", tmp_path / "mcp.json")
+    monkeypatch.setattr(hosts, "json_hosts", lambda: [desktop, cursor])
+    monkeypatch.setattr(hosts, "claude_code_installed", lambda: False)
+    monkeypatch.setattr(hosts, "claude_desktop_running", lambda platform=None: True)
+    monkeypatch.setattr(hosts, "wait_until_claude_desktop_closed", lambda **kw: False)
+    monkeypatch.setattr(cli, "_login", lambda: 0)
+
+    cli.main(["setup"])
+    out = capsys.readouterr().out
+    assert "Claude Desktop  SKIPPED: it's still open" in out
+    assert not desktop.path.exists()
+    assert "google-classroom" in read(cursor.path)["mcpServers"]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process API")
+def test_windows_process_listing_sees_this_python():
+    paths = [p.lower() for p in hosts._windows_process_paths()]
+    assert sys.executable.lower() in paths or any(p.endswith("python.exe") for p in paths)
 
 
 def test_client_filter(tmp_path, monkeypatch):

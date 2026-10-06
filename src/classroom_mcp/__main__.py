@@ -87,11 +87,43 @@ def _manual_instructions():
     print(f"  args:    {' '.join(args)}")
 
 
+def _close_claude_desktop_first(clients):
+    """Claude Desktop reverts config edits made while it runs (ADR-010), so wait
+    for it to be quit. Returns (clients, skipped_result_or_None)."""
+    from . import hosts
+
+    if hosts.CLAUDE_DESKTOP not in clients:
+        return clients, None
+    if not any(h.client == hosts.CLAUDE_DESKTOP for h in hosts.json_hosts()):
+        return clients, None
+    if not hosts.claude_desktop_running():
+        return clients, None
+
+    print("Claude Desktop is open. Please quit it completely first: it keeps its own copy of")
+    print("its settings and would undo this change.")
+    if sys.platform == "win32":
+        print("  Right-click the Claude icon in the system tray (bottom-right, near the clock)")
+        print("  and choose Quit. Closing the window isn't enough.")
+    else:
+        print("  Click on Claude Desktop and press Cmd+Q.")
+    print("Waiting for Claude Desktop to close (up to 5 minutes)...")
+    try:
+        closed = hosts.wait_until_claude_desktop_closed()
+    except KeyboardInterrupt:
+        closed = False
+    if closed:
+        print("Claude Desktop closed.\n")
+        return clients, None
+    skipped = hosts.Result("Claude Desktop", "skipped", "it's still open; quit it, then run this again")
+    return tuple(c for c in clients if c != hosts.CLAUDE_DESKTOP), skipped
+
+
 def _setup(clients):
     from . import hosts
 
     print("Adding classroom-mcp to the AI apps on this computer...\n")
-    results = hosts.setup(clients)
+    clients, skipped = _close_claude_desktop_first(clients)
+    results = ([skipped] if skipped else []) + hosts.setup(clients)
     if not results:
         print("No supported apps found (Claude Desktop, Claude Code, Cursor).")
         _manual_instructions()
@@ -106,10 +138,14 @@ def _setup(clients):
 
     code = _login()
     if ok:
-        apps = sorted({r.label.split(" (")[0] for r in ok if r.label != "Claude Code"})
+        steps = []
+        if any(r.label.startswith("Claude Desktop") for r in ok):
+            steps.append("open Claude Desktop")
+        if any(r.label == "Cursor" for r in ok):
+            steps.append("restart Cursor")
         print("\nAll done.", end=" ")
-        if apps:
-            print(f"Fully quit and reopen {' and '.join(apps)}, then", end=" ")
+        if steps:
+            print(f"Now {' and '.join(steps)}, then", end=" ")
         print('ask: "What do I still have to hand in this week?"')
     return code if ok else 1
 
@@ -117,7 +153,8 @@ def _setup(clients):
 def _remove(clients):
     from . import hosts
 
-    results = hosts.remove(clients)
+    clients, skipped = _close_claude_desktop_first(clients)
+    results = ([skipped] if skipped else []) + hosts.remove(clients)
     if not results:
         print("No supported apps found.")
         return 0

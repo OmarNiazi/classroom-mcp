@@ -57,8 +57,18 @@ manual instructions.
 - Student setup is one pasted command plus restarting the app.
 - The tool now writes to other applications' config files. Mitigated by merge-only edits,
   backups, refusing to touch unparseable files, and an explicit `remove`.
-- If an app is running and later rewrites its config from memory, the entry could be lost.
-  Re-running `setup` is safe; the README says to fully quit the app afterwards.
+- **Claude Desktop reverts edits made while it is running** (observed 2026-10-07, fixed in
+  0.2.1). It reads `claude_desktop_config.json` only at startup and later saves its whole
+  in-memory copy back (preferences and all), even while running. On the developer's machine,
+  `setup` wrote the new entry while Claude Desktop was open; Claude Desktop later wrote the old
+  `python server.py` entry back and never once launched the new command (46 launches, all old).
+  Telling users to "quit and reopen" *after* the edit doesn't help, because the revert can
+  happen on quit. **`setup` and `remove` now detect a running Claude Desktop** (Windows: process
+  image paths via `EnumProcesses`, excluding the Claude Code CLI's `claude.exe`; macOS:
+  `pgrep -x Claude`), tell the user to quit it from the tray, wait up to 5 minutes, and only then
+  write. If it stays open, Claude Desktop is skipped with a message and the other apps are still
+  configured. Verified on the developer's machine: no Claude Desktop process lingers after
+  Quit, and after the fix Claude Desktop launched the `uvx` entry and served tool calls.
 - The one-liners depend on the GitHub repo being public, and on the package names on
   PyPI/GitHub not changing.
 - Config locations are app implementation details and can change; each one is a single
